@@ -1,0 +1,41 @@
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'5323
+F.Intrinsic.Control.Try
+V.Local.sError.Declare
+v.Local.sRet.Declare
+v.Local.sSql.Declare
+v.Local.sMessage.Declare
+
+f.ODBC.Connection!coredb.opencompanyconnection
+
+'build the query
+f.Intrinsic.String.Build("select seq, description from v_job_operations where lmo = 'O' and job = '{0}' and suffix = '{1}' and FLAG_CLOSED <> 'Y' and seq < '995000'",V.Passed.000003.Trim,V.Passed.000004.Trim,v.Local.sSql)
+'check to see if we have any open operations for this work order
+f.ODBC.Connection!coredb.executeandreturn(v.Local.sSql,v.Local.sRet)
+f.ODBC.Connection!coredb.Close
+f.Intrinsic.Control.If(v.Local.sRet.Length,>,0)
+	'we have a record
+	f.Intrinsic.String.Split(v.Local.sRet,"*!*",v.Local.sRet)
+	f.Intrinsic.String.Build("This job has an open Outside Service:{2}  Sequence {0} with description {1}{2}{2}WIP to FG not allowed!",v.Local.sRet(0),v.Local.sRet(1),v.Ambient.NewLine,v.Local.sMessage)
+	v.Passed.000003.Set("")
+	v.Passed.000004.Set("")
+	f.Intrinsic.UI.Msgbox(v.Local.sMessage,"WIP to FG Not Allowed")
+	
+f.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.catching.Start
+v.Local.sError.declare(string)
+F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5323_NoWIP2FG_wOpenOutside.g2u",V.Ambient.NewLine,v.Args.sub,V.Args.errorno,V.args.errordesc,V.Local.sError)
+f.Intrinsic.UI.Msgbox(v.Local.sError)
+F.Intrinsic.Control.CallSub(FORM_UNLOAD)
+Program.Sub.catching.End
